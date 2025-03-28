@@ -7,7 +7,6 @@ struct ProfileImagePicker: View {
     
     var body: some View {
         VStack {
-            // Показываем выбранное изображение
             if let profileImage = profileImage {
                 Image(uiImage: profileImage)
                     .resizable()
@@ -22,7 +21,6 @@ struct ProfileImagePicker: View {
                     .foregroundColor(.gray)
             }
 
-            // Кнопка для выбора фото
             PhotosPicker(selection: $selectedImageItem, matching: .images) {
                 Text("Select Profile Picture")
                     .foregroundColor(.blue)
@@ -34,7 +32,6 @@ struct ProfileImagePicker: View {
         }
     }
 
-    // Функция для загрузки изображения из PhotosPicker
     private func loadImage(from item: PhotosPickerItem?) {
         guard let item = item else { return }
         item.loadTransferable(type: Data.self) { result in

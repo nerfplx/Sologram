@@ -16,9 +16,6 @@ struct SologramApp: App {
             apiKey: "362329481363912",
             apiSecret: "9SmqkB_CY_wOJxaKpcRtZs7EbGw"
         )
-        
-        let cloudinary = CLDCloudinary(configuration: cloudinaryConfig)
-        print("Cloudinary is set up successfully")
     }
 
     var body: some Scene {

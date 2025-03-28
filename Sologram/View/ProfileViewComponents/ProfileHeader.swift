@@ -32,19 +32,7 @@ struct ProfileHeader: View {
                 .padding(.leading)
             Text(user.bio)
                 .padding(.leading)
-            
-            NavigationLink(destination: EditProfileView(user: user, onSave: { username, bio in
-                updateProfile(username: username, bio: bio)
-            })) {
-                Text("Edit Profile")
-                    .foregroundColor(.blue)
-                    .padding()
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
-
-#Preview {
-    ProfileView()
 }
