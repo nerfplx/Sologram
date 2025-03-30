@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct NavigationBarView: View {
+    @Binding var userImages: [String]
+
     var body: some View {
         HStack {
             Image(systemName: "house")
@@ -9,8 +11,7 @@ struct NavigationBarView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.white)
             Spacer()
-            Image(systemName: "plus.app")
-                .foregroundStyle(.white)
+            PhotoUploader(userImages: $userImages)
             Spacer()
             Image(systemName: "play.square.stack")
                 .foregroundStyle(.white)

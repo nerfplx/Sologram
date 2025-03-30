@@ -4,7 +4,7 @@ struct ProfileHeader: View {
     var user: UserProfile
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             if let profileImageURL = user.profileImageURL, !profileImageURL.isEmpty {
                 AsyncImage(url: URL(string: profileImageURL)) { image in
                     image.resizable()
@@ -25,14 +25,20 @@ struct ProfileHeader: View {
             }
             
             Text(user.username)
+                .foregroundStyle(.white)
                 .fontWeight(.bold)
                 .padding(.leading)
             Text(user.email)
                 .foregroundColor(.gray)
                 .padding(.leading)
             Text(user.bio)
+                .foregroundStyle(.white)
                 .padding(.leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+#Preview {
+    ProfileView()
 }
