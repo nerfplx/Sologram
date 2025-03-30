@@ -22,8 +22,10 @@ struct ProfileImagePicker: View {
             }
 
             PhotosPicker(selection: $selectedImageItem, matching: .images) {
-                Text("Select Profile Picture")
-                    .foregroundColor(.blue)
+                Text("Change photo")
+                    .foregroundColor(Color("blueCustom"))
+                    .bold()
+                    .font(.title3)
             }
             .onChange(of: selectedImageItem) {
                 loadImage(from: selectedImageItem)
