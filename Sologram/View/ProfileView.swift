@@ -43,7 +43,7 @@ struct ProfileView: View {
                     }
                     ScrollView {
                         VStack {
-                            ProfileHeader(user: user)
+                            ProfileHeader(user: user, imageCount: userImages.count)
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
                                 ForEach(userImages, id: \.self) { imageUrl in
                                     AsyncImage(url: URL(string: imageUrl)) { phase in

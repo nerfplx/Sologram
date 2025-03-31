@@ -5,8 +5,10 @@ struct NavigationBarView: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "house")
-                .foregroundStyle(.white)
+            NavigationLink(destination: HomeView(userImages: $userImages)) {
+                Image(systemName: "house")
+                    .foregroundStyle(.white)
+            }
             Spacer()
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.white)
@@ -16,8 +18,10 @@ struct NavigationBarView: View {
             Image(systemName: "play.square.stack")
                 .foregroundStyle(.white)
             Spacer()
-            Image(systemName: "person.circle.fill")
-                .foregroundStyle(.white)
+            NavigationLink(destination: ProfileView()) {
+                Image(systemName: "person.circle.fill")
+                    .foregroundStyle(.white)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding()

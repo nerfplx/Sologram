@@ -16,8 +16,8 @@ struct PhotoUploader: View {
                 .font(.title)
                 .foregroundStyle(.white)
         }
-        .onChange(of: selectedImageItem) { newItem in
-            if let newItem = newItem {
+        .onChange(of: selectedImageItem) {
+            if let newItem = selectedImageItem {
                 Task {
                     if let data = try? await newItem.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) {
@@ -47,6 +47,42 @@ struct PhotoUploader: View {
         })
     }
 
+    func addPost(imageUrl: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
+                return
+            }
+            guard let data = snapshot?.data(),
+                  let email = data["email"] as? String,
+                  let username = data["username"] as? String else {
+                      return
+                  }
+            
+            let postRef = db.collection("posts").document()
+            let postData: [String: Any] = [
+                "imageUrl": imageUrl,
+                "likes": 0,
+                "timestamp": Timestamp(date: Date()),
+                "author": [
+                    "uid": uid,
+                    "email": email,
+                    "username": username
+                ]
+            ]
+            
+            postRef.setData(postData) { error in
+                if let error = error {
+                    print("Ошибка при добавлении поста: \(error.localizedDescription)")
+                } else {
+                    print("Пост успешно добавлен!")
+                }
+            }
+        }
+    }
+    
     func saveImageUrlToFirestore(url: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
@@ -54,8 +90,9 @@ struct PhotoUploader: View {
             if let error = error {
                 errorMessage = "Failed to save image: \(error.localizedDescription)"
             } else {
-                userImages.append(url)
+                addPost(imageUrl: url)
             }
         }
     }
+
 }
