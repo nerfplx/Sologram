@@ -5,4 +5,5 @@ struct Post: Identifiable {
     let imageUrl: String
     let author: UserProfile
     let likes: Int
+    var likedBy: [String]
 }

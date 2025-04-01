@@ -9,7 +9,7 @@ struct PhotoUploader: View {
     @State private var selectedImageItem: PhotosPickerItem?
     @State private var isUploading = false
     @State private var errorMessage: String?
-
+    
     var body: some View {
         PhotosPicker(selection: $selectedImageItem, matching: .images) {
             Image(systemName: "plus.app")
@@ -17,60 +17,72 @@ struct PhotoUploader: View {
                 .foregroundStyle(.white)
         }
         .onChange(of: selectedImageItem) {
-            if let newItem = selectedImageItem {
-                Task {
-                    if let data = try? await newItem.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        uploadImageToCloudinary(image: image)
-                    }
-                }
+            handleImageSelection()
+        }
+    }
+    
+    private func handleImageSelection() {
+        guard let newItem = selectedImageItem else { return }
+        
+        Task {
+            if let data = try? await newItem.loadTransferable(type: Data.self),
+               let image = UIImage(data: data) {
+                uploadImageToCloudinary(image: image)
             }
         }
     }
-
-    func uploadImageToCloudinary(image: UIImage) {
+    
+    private func uploadImageToCloudinary(image: UIImage) {
         isUploading = true
         let config = CLDConfiguration(cloudName: "dl1ajqx6c", apiKey: "362329481363912", apiSecret: "9SmqkB_CY_wOJxaKpcRtZs7EbGw")
         let cloudinary = CLDCloudinary(configuration: config)
-
+        
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-
+        
         cloudinary.createUploader().upload(data: imageData, uploadPreset: "ml_default", completionHandler:  { result, error in
             DispatchQueue.main.async {
-                isUploading = false
+                self.isUploading = false
+                
                 if let error = error {
-                    errorMessage = "Upload failed: \(error.localizedDescription)"
+                    self.errorMessage = "Upload failed: \(error.localizedDescription)"
                 } else if let url = result?.secureUrl {
-                    saveImageUrlToFirestore(url: url)
+                    self.saveImageUrlToFirestore(url: url)
                 }
             }
         })
     }
-
-    func addPost(imageUrl: String) {
+    
+    private func saveImageUrlToFirestore(url: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-
-        db.collection("users").document(uid).getDocument { snapshot, error in
+        
+        db.collection("users").document(uid).collection("images").addDocument(data: ["url": url]) { error in
             if let error = error {
-                return
+                self.errorMessage = "Failed to save image: \(error.localizedDescription)"
+            } else {
+                self.addPost(imageUrl: url)
             }
-            guard let data = snapshot?.data(),
+        }
+    }
+    private func addPost(imageUrl: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            guard let data = snapshot?.data(), error == nil,
                   let email = data["email"] as? String,
                   let username = data["username"] as? String else {
-                      return
-                  }
+                print("Ошибка получения данных пользователя")
+                return
+            }
             
             let postRef = db.collection("posts").document()
             let postData: [String: Any] = [
                 "imageUrl": imageUrl,
                 "likes": 0,
+                "likedBy": [],
                 "timestamp": Timestamp(date: Date()),
-                "author": [
-                    "uid": uid,
-                    "email": email,
-                    "username": username
-                ]
+                "author": ["uid": uid, "email": email, "username": username]
             ]
             
             postRef.setData(postData) { error in
@@ -82,17 +94,4 @@ struct PhotoUploader: View {
             }
         }
     }
-    
-    func saveImageUrlToFirestore(url: String) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).collection("images").addDocument(data: ["url": url]) { error in
-            if let error = error {
-                errorMessage = "Failed to save image: \(error.localizedDescription)"
-            } else {
-                addPost(imageUrl: url)
-            }
-        }
-    }
-
 }
