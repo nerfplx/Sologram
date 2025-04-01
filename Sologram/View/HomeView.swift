@@ -5,6 +5,10 @@ import FirebaseFirestore
 struct HomeView: View {
     @Binding var userImages: [String]
     @StateObject private var postService = PostService()
+    @State private var showCommentsModal = false
+    @State private var selectedPost: Post?
+    @State private var commentText: String = ""
+    @State private var comments: [Comment] = []
     
     var body: some View {
         NavigationStack {
@@ -54,7 +58,13 @@ struct HomeView: View {
                                     Text("\(post.likes)")
                                         .foregroundStyle(.white)
                                 }
-                                Button(action: {}) {
+                                Button(action: {
+                                    selectedPost = post
+                                    postService.fetchComments(postId: post.id) { comments in
+                                        self.comments = comments
+                                    }
+                                    showCommentsModal.toggle()
+                                }) {
                                     Image(systemName: "bubble.left")
                                         .foregroundColor(.white)
                                         .padding(.leading)
@@ -76,9 +86,15 @@ struct HomeView: View {
             }
             .background(.black)
             .navigationBarBackButtonHidden(true)
+            .sheet(isPresented: $showCommentsModal) {
+                if let post = selectedPost {
+                    CommentsModalView(post: $selectedPost, commentText: $commentText, comments: $comments, postService: postService)
+                }
+            }
         }
     }
 }
+
 #Preview {
     @Previewable @State var userImages: [String] = []
     return HomeView(userImages: $userImages)
