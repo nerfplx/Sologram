@@ -4,8 +4,9 @@ import FirebaseFirestore
 
 struct ProfileView: View {
     @State private var user: UserProfile? = nil
-    @State private var userImages: [String] = []
+//    @State private var userImages: [String] = []
     @State private var errorMessage: String?
+    @ObservedObject var postService = PostService()
     
     var body: some View {
         NavigationStack {
@@ -15,13 +16,13 @@ struct ProfileView: View {
                     
                     ScrollView {
                         VStack {
-                            ProfileHeader(user: user, imageCount: userImages.count)
+                            ProfileHeader(user: user, imageCount: postService.posts.count)
                             imagesGrid
                         }
                         .padding()
                     }
                     
-                    NavigationBarView(userImages: $userImages)
+                    NavigationBarView(userImages: .constant(postService.posts.map { $0.imageUrl }))
                 } else {
                     ProgressView()
                 }
@@ -30,7 +31,14 @@ struct ProfileView: View {
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 loadUserProfile()
-                loadUserImages()
+                if let userId = user?.uid {
+                    postService.fetchUserPosts(userId: userId)
+                }
+            }
+            .onChange(of: user) { newUser, _ in
+                if let uid = newUser?.uid {
+                    postService.fetchUserPosts(userId: uid)
+                }
             }
         }
     }
@@ -42,7 +50,7 @@ extension ProfileView {
             Text(user.email.split(separator: "@")[0])
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(Color.black)
+                .background(.black)
                 .foregroundColor(.white)
                 .font(.title)
                 .bold()
@@ -65,8 +73,8 @@ extension ProfileView {
     
     private var imagesGrid: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-            ForEach(userImages, id: \.self) { imageUrl in
-                let imageURL = URL(string: imageUrl)
+            ForEach(postService.posts, id: \.id) { post in
+                let imageURL = URL(string: post.imageUrl)
                 NavigationLink(destination: ProfileFeedView(userId: user?.uid ?? "")) {
                     AsyncImage(url: imageURL) { phase in
                         switch phase {
@@ -107,17 +115,17 @@ extension ProfileView {
         }
     }
     
-    private func loadUserImages() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        db.collection("users").document(uid).collection("images").getDocuments { snapshot, error in
-            if let error = error {
-                errorMessage = "Failed to load images: \(error.localizedDescription)"
-            } else {
-                userImages = snapshot?.documents.compactMap { $0["url"] as? String } ?? []
-            }
-        }
-    }
+//    private func loadUserImages() {
+//        guard let uid = Auth.auth().currentUser?.uid else { return }
+//        let db = Firestore.firestore()
+//        db.collection("users").document(uid).collection("images").getDocuments { snapshot, error in
+//            if let error = error {
+//                errorMessage = "Failed to load images: \(error.localizedDescription)"
+//            } else {
+//                userImages = snapshot?.documents.compactMap { $0["url"] as? String } ?? []
+//            }
+//        }
+//    }
     
     private func updateProfile(username: String, bio: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }

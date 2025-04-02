@@ -6,37 +6,24 @@ class PostService: ObservableObject {
     private let db = Firestore.firestore()
     
     func fetchPosts() {
-        db.collection("posts")
-            .order(by: "timestamp", descending: true)
-            .addSnapshotListener { snapshot, error in
-                guard let documents = snapshot?.documents, error == nil else { return }
-                
-                DispatchQueue.main.async {
-                    self.posts = documents.compactMap { doc in
-                        self.parsePost(from: doc)
-                    }
-                }
-            }
+        fetchPosts(query: db.collection("posts").order(by: "timestamp", descending: true))
     }
     
     func fetchUserPosts(userId: String) {
-        db.collection("posts")
-            .whereField("author.uid", isEqualTo: userId)
-            .order(by: "timestamp", descending: true)
-            .addSnapshotListener { snapshot, error in
-                guard let documents = snapshot?.documents, error == nil else { return }
-                
-                DispatchQueue.main.async {
-                    self.posts = documents.compactMap { doc in
-                        self.parsePost(from: doc)
-                    }
-                }
+        fetchPosts(query: db.collection("posts").whereField("author.uid", isEqualTo: userId).order(by: "timestamp", descending: true))
+    }
+    
+    private func fetchPosts(query: Query) {
+        query.addSnapshotListener { snapshot, error in
+            guard let documents = snapshot?.documents, error == nil else { return }
+            DispatchQueue.main.async {
+                self.posts = documents.compactMap(self.parsePost)
             }
+        }
     }
     
     private func parsePost(from doc: QueryDocumentSnapshot) -> Post? {
         let data = doc.data()
-        
         guard let imageUrl = data["imageUrl"] as? String,
               let likes = data["likes"] as? Int,
               let likedBy = data["likedBy"] as? [String],
@@ -48,41 +35,32 @@ class PostService: ObservableObject {
         let author = UserProfile(uid: uid, email: email, username: username, bio: "", profileImageURL: nil)
         return Post(id: doc.documentID, imageUrl: imageUrl, author: author, likes: likes, likedBy: likedBy)
     }
+    
     func toggleLike(post: Post) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let postRef = db.collection("posts").document(post.id)
         
-        db.runTransaction({ (transaction, errorPointer) -> Any? in
-            let postSnapshot: DocumentSnapshot
+        db.runTransaction({ transaction, errorPointer -> Any? in
             do {
-                postSnapshot = try transaction.getDocument(postRef)
+                let postSnapshot = try transaction.getDocument(postRef)
+                var likedBy = postSnapshot.data()? ["likedBy"] as? [String] ?? []
+                var likes = postSnapshot.data()? ["likes"] as? Int ?? 0
+                
+                if likedBy.contains(uid) {
+                    likes -= 1
+                    likedBy.removeAll { $0 == uid }
+                } else {
+                    likes += 1
+                    likedBy.append(uid)
+                }
+                transaction.updateData(["likes": likes, "likedBy": likedBy], forDocument: postRef)
             } catch {
                 errorPointer?.pointee = error as NSError
-                print("Ошибка получения документа: \(error.localizedDescription)")
                 return nil
             }
-            var likedBy = postSnapshot.data()?["likedBy"] as? [String] ?? []
-            var likes = postSnapshot.data()?["likes"] as? Int ?? 0
-            
-            if likedBy.contains(uid) {
-                likes -= 1
-                likedBy.removeAll { $0 == uid }
-            } else {
-                likes += 1
-                likedBy.append(uid)
-            }
-            transaction.updateData([
-                "likes": likes,
-                "likedBy": likedBy
-            ], forDocument: postRef)
-            
             return nil
         }) { _, error in
-            if let error = error {
-                print("Ошибка при изменении лайка: \(error.localizedDescription)")
-            } else {
-                self.fetchUserPosts(userId: post.author.uid)
-            }
+            if let error = error { print("Ошибка лайка: \(error.localizedDescription)") }
         }
     }
     
@@ -91,20 +69,15 @@ class PostService: ObservableObject {
             .order(by: "timestamp", descending: true)
             .getDocuments { snapshot, error in
                 guard let documents = snapshot?.documents, error == nil else {
-                    print("Ошибка получения комментариев: \(error?.localizedDescription ?? "неизвестная ошибка")")
+                    print("Ошибка комментариев: \(error?.localizedDescription ?? "неизвестная ошибка")")
                     return
                 }
-                
-                let comments = documents.compactMap { doc in
-                    self.parseComment(from: doc)
-                }
-                completion(comments)
+                completion(documents.compactMap(self.parseComment))
             }
     }
     
     private func parseComment(from doc: QueryDocumentSnapshot) -> Comment? {
         let data = doc.data()
-        
         guard let text = data["text"] as? String,
               let timestamp = data["timestamp"] as? Timestamp,
               let userProfileData = data["userProfile"] as? [String: Any],
@@ -118,11 +91,10 @@ class PostService: ObservableObject {
     
     func addComment(postId: String, commentText: String, completion: @escaping (Bool) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
         
         db.collection("users").document(uid).getDocument { snapshot, error in
             guard let data = snapshot?.data(), error == nil else {
-                print("Ошибка при получении данных пользователя: \(error?.localizedDescription ?? "")")
+                print("Ошибка пользователя: \(error?.localizedDescription ?? "")")
                 completion(false)
                 return
             }
@@ -130,38 +102,27 @@ class PostService: ObservableObject {
             let username = data["username"] as? String ?? "Unknown"
             let profileImageURL = data["profileImageURL"] as? String ?? ""
             
-            db.collection("posts").document(postId).collection("comments").addDocument(data: [
+            let commentData: [String: Any] = [
                 "text": commentText,
                 "timestamp": Timestamp(date: Date()),
-                "userProfile": [
-                    "uid": uid,
-                    "username": username,
-                    "profileImageURL": profileImageURL
-                ]
-            ]) { error in
-                if let error = error {
-                    print("Ошибка при добавлении комментария: \(error.localizedDescription)")
-                    completion(false)
-                } else {
-                    print("Комментарий успешно добавлен!")
-                    completion(true)
-                }
+                "userProfile": ["uid": uid, "username": username, "profileImageURL": profileImageURL]
+            ]
+            
+            self.db.collection("posts").document(postId).collection("comments").addDocument(data: commentData) { error in
+                completion(error == nil)
             }
         }
     }
     
     func deletePost(post: Post, completion: @escaping (Bool) -> Void) {
-        let postId = post.id
-        
-        let db = Firestore.firestore()
-        db.collection("posts").document(postId).delete() { error in
+        db.collection("posts").document(post.id).delete { error in
             if let error = error {
-                print("Ошибка при удалении поста: \(error.localizedDescription)")
+                print("Ошибка удаления поста: \(error.localizedDescription)")
                 completion(false)
             } else {
-                print("Пост удален успешно")
                 completion(true)
             }
         }
     }
+
 }
