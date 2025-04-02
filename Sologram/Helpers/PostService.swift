@@ -19,6 +19,21 @@ class PostService: ObservableObject {
             }
     }
     
+    func fetchUserPosts(userId: String) {
+        db.collection("posts")
+            .whereField("author.uid", isEqualTo: userId)
+            .order(by: "timestamp", descending: true)
+            .addSnapshotListener { snapshot, error in
+                guard let documents = snapshot?.documents, error == nil else { return }
+                
+                DispatchQueue.main.async {
+                    self.posts = documents.compactMap { doc in
+                        self.parsePost(from: doc)
+                    }
+                }
+            }
+    }
+    
     private func parsePost(from doc: QueryDocumentSnapshot) -> Post? {
         let data = doc.data()
         
@@ -65,6 +80,8 @@ class PostService: ObservableObject {
         }) { _, error in
             if let error = error {
                 print("Ошибка при изменении лайка: \(error.localizedDescription)")
+            } else {
+                self.fetchUserPosts(userId: post.author.uid)
             }
         }
     }
@@ -129,6 +146,21 @@ class PostService: ObservableObject {
                     print("Комментарий успешно добавлен!")
                     completion(true)
                 }
+            }
+        }
+    }
+    
+    func deletePost(post: Post, completion: @escaping (Bool) -> Void) {
+        let postId = post.id
+        
+        let db = Firestore.firestore()
+        db.collection("posts").document(postId).delete() { error in
+            if let error = error {
+                print("Ошибка при удалении поста: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                print("Пост удален успешно")
+                completion(true)
             }
         }
     }

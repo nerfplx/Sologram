@@ -33,7 +33,6 @@ struct HomeView: View {
                 
                 ScrollView {
                     ForEach(postService.posts) { post in
-                        //                        ForEach(posts) { post in
                         VStack {
                             HStack {
                                 Text(post.author.username)
@@ -99,21 +98,3 @@ struct HomeView: View {
     @Previewable @State var userImages: [String] = []
     return HomeView(userImages: $userImages)
 }
-
-
-
-
-
-//        @State private var posts: [Post] = [
-//            Post(id: "", imageUrl: "https://images.prom.ua/2987667453_w600_h600_2987667453.jpg",
-//                     author: UserProfile(uid: "1", email: "user1@example.com", username: "user1", bio: "", profileImageURL: nil),
-//                     likes: 150),
-//
-//            Post(id: "", imageUrl: "https://avatarko.ru/img/kartinka/1/avatarko_anonim.jpg",
-//                     author: UserProfile(uid: "2", email: "user2@example.com", username: "user2", bio: "", profileImageURL: nil),
-//                     likes: 200),
-//
-//            Post(id: "", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1zwhySGCEBxRRFYIcQgvOLOpRGqrT3d7Qng&s",
-//                     author: UserProfile(uid: "3", email: "user3@example.com", username: "user3", bio: "", profileImageURL: nil),
-//                     likes: 320)
-//        ]
