@@ -4,7 +4,6 @@ import FirebaseFirestore
 
 struct ProfileView: View {
     @State private var user: UserProfile? = nil
-//    @State private var userImages: [String] = []
     @State private var errorMessage: String?
     @ObservedObject var postService = PostService()
     
@@ -13,7 +12,6 @@ struct ProfileView: View {
             VStack {
                 if let user = user {
                     headerView(for: user)
-                    
                     ScrollView {
                         VStack {
                             ProfileHeader(user: user, imageCount: postService.posts.count)
@@ -31,13 +29,8 @@ struct ProfileView: View {
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 loadUserProfile()
-                if let userId = user?.uid {
+                if let userId = Auth.auth().currentUser?.uid {
                     postService.fetchUserPosts(userId: userId)
-                }
-            }
-            .onChange(of: user) { newUser, _ in
-                if let uid = newUser?.uid {
-                    postService.fetchUserPosts(userId: uid)
                 }
             }
         }
@@ -115,18 +108,6 @@ extension ProfileView {
         }
     }
     
-//    private func loadUserImages() {
-//        guard let uid = Auth.auth().currentUser?.uid else { return }
-//        let db = Firestore.firestore()
-//        db.collection("users").document(uid).collection("images").getDocuments { snapshot, error in
-//            if let error = error {
-//                errorMessage = "Failed to load images: \(error.localizedDescription)"
-//            } else {
-//                userImages = snapshot?.documents.compactMap { $0["url"] as? String } ?? []
-//            }
-//        }
-//    }
-    
     private func updateProfile(username: String, bio: String) {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
@@ -143,6 +124,3 @@ extension ProfileView {
     }
 }
 
-#Preview {
-    ProfileView()
-}

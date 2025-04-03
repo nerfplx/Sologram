@@ -56,6 +56,4 @@ struct ProfileHeader: View {
     }
 }
 
-#Preview {
-    ProfileView()
-}
+

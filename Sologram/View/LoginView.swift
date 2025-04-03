@@ -7,6 +7,7 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var navigateToSignUp = false
     @State private var navigateToProfile = false
+    @Binding var userImages: [String]
     
     var body: some View {
         NavigationStack {
@@ -55,7 +56,7 @@ struct LoginView: View {
                 SignUpView()
             }
             .navigationDestination(isPresented: $navigateToProfile) {
-                ProfileView()
+                HomeView(userImages: $userImages)
             }
         }
     }
@@ -70,8 +71,4 @@ struct LoginView: View {
             }
         }
     }
-}
-
-#Preview {
-    LoginView()
 }

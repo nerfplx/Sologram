@@ -21,7 +21,7 @@ struct SologramApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                LoginView()
+                LoginView(userImages: .constant([]))
             }
         }
     }

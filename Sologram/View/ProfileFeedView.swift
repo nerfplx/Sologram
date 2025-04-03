@@ -83,3 +83,7 @@ struct ProfileFeedView: View {
         }
     }
 }
+
+#Preview {
+    ProfileFeedView(userId: "testUserId")
+}

@@ -23,7 +23,7 @@ struct PhotoUploader: View {
                 .font(.title)
                 .foregroundStyle(.white)
         }
-        .onChange(of: selectedImageItem) { newItem in
+        .onChange(of: selectedImageItem) { newItem, _ in
             handleImageSelection(newItem: newItem)
         }
     }
