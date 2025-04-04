@@ -12,7 +12,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Text("InstaClone")
+                Text("Sologram")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding()
