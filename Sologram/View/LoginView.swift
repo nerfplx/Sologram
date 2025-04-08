@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct LoginView: View {
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String?
@@ -67,7 +68,7 @@ struct LoginView: View {
                 errorMessage = error.localizedDescription
             } else {
                 print("User logged in: \(result?.user.email ?? "Unknown")")
-                navigateToProfile = true
+                isLoggedIn = true
             }
         }
     }

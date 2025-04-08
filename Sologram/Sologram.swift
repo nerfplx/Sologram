@@ -5,6 +5,8 @@ import Cloudinary
 
 @main
 struct SologramApp: App {
+    @State private var userImages: [String] = []
+
     init() {
         FirebaseApp.configure()
         setupCloudinary()
@@ -20,9 +22,7 @@ struct SologramApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationView {
-                LoginView(userImages: .constant([]))
-            }
+            ContentView(userImages: $userImages)
         }
     }
 }

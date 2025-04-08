@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct ProfileView: View {
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = true
     @State private var user: UserProfile? = nil
     @State private var errorMessage: String?
     @ObservedObject var postService = PostService()
@@ -54,6 +55,16 @@ extension ProfileView {
                 })) {
                     Text("Edit Profile")
                 }
+                Button(role: .destructive) {
+                        do {
+                            try Auth.auth().signOut()
+                            isLoggedIn = false
+                        } catch {
+                            errorMessage = "Ошибка при выходе: \(error.localizedDescription)"
+                        }
+                    } label: {
+                        Label("Выйти", systemImage: "rectangle.portrait.and.arrow.forward")
+                    }
             } label: {
                 Image(systemName: "line.horizontal.3")
             }
