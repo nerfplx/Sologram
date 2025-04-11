@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var selectedPost: Post?
     @State private var commentText: String = ""
     @State private var comments: [Comment] = []
+    @State private var showUserListView = false
     
     var body: some View {
         NavigationStack {
@@ -23,9 +24,14 @@ struct HomeView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.white)
                     }
-                    Button(action: {}) {
+                    Button(action: {
+                        showUserListView = true 
+                    }) {
                         Image(systemName: "paperplane")
                             .foregroundColor(.white)
+                    }
+                    .navigationDestination(isPresented: $showUserListView) {
+                        UserListView()
                     }
                 }
                 .padding()

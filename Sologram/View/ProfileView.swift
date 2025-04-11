@@ -7,6 +7,7 @@ struct ProfileView: View {
     @State private var user: UserProfile? = nil
     @State private var errorMessage: String?
     @ObservedObject var postService = PostService()
+    @State private var userImages: [String] = []
     
     var body: some View {
         NavigationStack {
@@ -20,8 +21,7 @@ struct ProfileView: View {
                         }
                         .padding()
                     }
-                    
-                    NavigationBarView(userImages: .constant(postService.posts.map { $0.imageUrl }))
+                      NavigationBarView(userImages: $userImages)
                 } else {
                     ProgressView()
                 }

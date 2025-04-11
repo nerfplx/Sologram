@@ -23,7 +23,6 @@ class PostService: ObservableObject {
                 print("Ошибка при получении постов: \(error.localizedDescription)")
                 return
             }
-            
             guard let documents = snapshot?.documents else { return }
             DispatchQueue.main.async {
                 self.posts = documents.compactMap(self.parsePost)
@@ -33,7 +32,6 @@ class PostService: ObservableObject {
     
     private func parsePost(from doc: QueryDocumentSnapshot) -> Post? {
         let data = doc.data()
-        
         guard
             let imageUrl = data["imageUrl"] as? String,
             let likes = data["likes"] as? Int,
@@ -46,7 +44,6 @@ class PostService: ObservableObject {
             print("Ошибка парсинга поста: \(doc.documentID)")
             return nil
         }
-        
         let author = UserProfile(uid: uid, email: email, username: username, bio: "", profileImageURL: nil)
         return Post(id: doc.documentID, imageUrl: imageUrl, author: author, likes: likes, likedBy: likedBy)
     }

@@ -23,18 +23,24 @@ struct PhotoUploader: View {
                 .font(.title)
                 .foregroundStyle(.white)
         }
-        .onChange(of: selectedImageItem) { newItem, _ in
+        .onChange(of: selectedImageItem) { newItem in
+            print("selectedImageItem изменился")
             handleImageSelection(newItem: newItem)
         }
     }
 
     private func handleImageSelection(newItem: PhotosPickerItem?) {
+        print("handleImageSelection вызвана")
         guard let newItem = newItem else { return }
+        print("Выбран элемент, загружаем данные...")
         Task {
             do {
                 if let data = try await newItem.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
+                    print("Данные изображения успешно получены, начинаем загрузку...")
                     uploadImageToCloudinary(image: image)
+                } else {
+                    print("Не удалось получить данные или преобразовать в UIImage")
                 }
             } catch {
                 errorMessage = "Ошибка загрузки изображения"
@@ -45,6 +51,7 @@ struct PhotoUploader: View {
 
     private func uploadImageToCloudinary(image: UIImage) {
         guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+        print("Начинается загрузка в Cloudinary...")
         isUploading = true
 
         cloudinary.createUploader().upload(data: imageData, uploadPreset: "ml_default", completionHandler: { result, error in
@@ -62,7 +69,7 @@ struct PhotoUploader: View {
                     print("Не удалось получить URL изображения")
                     return
                 }
-                
+                print("Изображение загружено, URL: \(url)")
                 self.saveImageUrlToFirestore(url: url)
             }
         })
