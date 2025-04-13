@@ -9,96 +9,122 @@ struct HomeView: View {
     @State private var selectedPost: Post?
     @State private var commentText: String = ""
     @State private var comments: [Comment] = []
-    @State private var showUserListView = false
-    
+    @State private var path = NavigationPath()
+
     var body: some View {
-        NavigationStack {
-            VStack {
-                HStack {
-                    Text("Sologram")
-                        .font(.largeTitle)
-                        .bold()
-                        .foregroundColor(.white)
-                    Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.white)
-                    }
-                    Button(action: {
-                        showUserListView = true 
-                    }) {
-                        Image(systemName: "paperplane")
-                            .foregroundColor(.white)
-                    }
-                    .navigationDestination(isPresented: $showUserListView) {
-                        UserListView()
-                    }
-                }
-                .padding()
-                .background(.black)
-                
-                ScrollView {
-                    ForEach(postService.posts) { post in
-                        VStack {
-                            HStack {
-                                Text(post.author.username)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                Spacer()
-                            }
-                            .padding([.leading, .top])
-                            
-                            AsyncImage(url: URL(string: post.imageUrl)) { image in
-                                image.resizable()
-                                    .scaledToFit()
-                                    .frame(maxWidth: .infinity, maxHeight: 300)
-                                    .background(.gray)
-                            } placeholder: {
-                                ProgressView()
-                            }
-                            HStack {
-                                Button(action: { postService.toggleLike(post: post) }) {
-                                    Image(systemName: post.likedBy.contains(Auth.auth().currentUser?.uid ?? "") ? "heart.fill" : "heart")
-                                        .foregroundColor(.white)
-                                    Text("\(post.likes)")
-                                        .foregroundStyle(.white)
-                                }
-                                Button(action: {
-                                    selectedPost = post
-                                    postService.fetchComments(postId: post.id) { comments in
-                                        self.comments = comments
-                                    }
-                                    showCommentsModal.toggle()
-                                }) {
-                                    Image(systemName: "bubble.left")
-                                        .foregroundColor(.white)
-                                        .padding(.leading)
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal)
-                        }
-                        .background(.black)
-                        .cornerRadius(10)
-                        .shadow(radius: 5)
-                        .padding([.horizontal, .top])
-                    }
-                }
-                .onAppear {
-                    postService.fetchPosts()
-                }
+        NavigationStack(path: $path) {
+            VStack(spacing: 0) {
+                header
+                postFeed
                 NavigationBarView(userImages: $userImages)
             }
             .background(.black)
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showCommentsModal) {
                 if let post = selectedPost {
-                    CommentsModalView(post: $selectedPost, commentText: $commentText, comments: $comments, postService: postService)
+                    CommentsModalView(
+                        post: $selectedPost,
+                        commentText: $commentText,
+                        comments: $comments,
+                        postService: postService
+                    )
+                }
+            }
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .userList:
+                    UserListView(path: $path)
+                case .chat(let chatId, let username):
+                    ChatView(path: $path, chatId: chatId, recipientUsername: username)
+                }
+            }
+        }
+        .onAppear {
+            postService.fetchPosts()
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Text("Sologram")
+                .font(.largeTitle)
+                .bold()
+            Spacer()
+            Button(action: {}) {
+                Image(systemName: "magnifyingglass")
+            }
+            Button {
+                path.append(Route.userList)
+            } label: {
+                Image(systemName: "paperplane")
+            }
+        }
+        .padding()
+        .foregroundStyle(.white)
+        .background(.black)
+    }
+
+    private var postFeed: some View {
+        ScrollView {
+            LazyVStack {
+                ForEach(postService.posts) { post in
+                    postCard(post)
                 }
             }
         }
     }
+
+    private func postCard(_ post: Post) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(post.author.username)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .padding(.horizontal)
+
+            AsyncImage(url: URL(string: post.imageUrl)) { image in
+                image.resizable()
+                     .scaledToFit()
+                     .frame(maxWidth: .infinity, maxHeight: 300)
+                     .background(.gray)
+            } placeholder: {
+                ProgressView()
+            }
+
+            HStack(spacing: 16) {
+                Button {
+                    postService.toggleLike(post: post)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: post.likedBy.contains(Auth.auth().currentUser?.uid ?? "")
+                              ? "heart.fill"
+                              : "heart")
+                        Text("\(post.likes)")
+                    }
+                }
+
+                Button {
+                    selectedPost = post
+                    postService.fetchComments(postId: post.id) { comments in
+                        self.comments = comments
+                    }
+                    showCommentsModal = true
+                } label: {
+                    Image(systemName: "bubble.left")
+                }
+
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+        .background(.black)
+        .cornerRadius(10)
+        .shadow(radius: 5)
+        .padding([.horizontal, .top])
+    }
 }
+
 
 #Preview {
     @Previewable @State var userImages: [String] = []
