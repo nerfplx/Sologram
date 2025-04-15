@@ -3,11 +3,11 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct ChatView: View {
-    @Binding var path: NavigationPath
     let chatId: String
     let recipientUsername: String
     @State private var messages: [Message] = []
     @State private var newMessage: String = ""
+    @Environment(\.dismiss) var dismiss
     
     private let db = Firestore.firestore()
     
@@ -18,7 +18,19 @@ struct ChatView: View {
         }
         .background(.black)
         .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: customBackButton)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                HStack(spacing: 4) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                    }
+                    Text(recipientUsername)
+                        .foregroundColor(.white)
+                        .font(.headline)
+                }
+            }
+        }
         .onAppear {
             listenForMessages()
         }
@@ -49,21 +61,6 @@ struct ChatView: View {
         }
         .padding(.horizontal)
         .padding(.bottom)
-    }
-    
-    private var customBackButton: some View {
-        HStack(spacing: 4) {
-            Button(action: {
-                path.removeLast()
-            }) {
-                Image(systemName: "chevron.left")
-                    .foregroundColor(.white)
-            }
-            
-            Text(recipientUsername)
-                .foregroundColor(.white)
-                .font(.headline)
-        }
     }
     
     private func sendMessage() {

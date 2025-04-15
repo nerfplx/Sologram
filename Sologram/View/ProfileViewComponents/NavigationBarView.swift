@@ -15,7 +15,7 @@ struct NavigationBarView: View {
             Spacer()
             PhotoUploader(userImages: $userImages)
             Spacer()
-            NavigationLink(destination: StackedImageView()) {
+            NavigationLink(destination: ImageLoopView()) {
                 Image(systemName: "play.square.stack")
                     .foregroundStyle(.white)
             }

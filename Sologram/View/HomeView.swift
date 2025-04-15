@@ -9,10 +9,11 @@ struct HomeView: View {
     @State private var selectedPost: Post?
     @State private var commentText: String = ""
     @State private var comments: [Comment] = []
-    @State private var path = NavigationPath()
-
+    @State private var showUserList = false
+    @State private var selectedChat: (chatId: String, recipientUsername: String)? = nil
+    
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack {
             VStack(spacing: 0) {
                 header
                 postFeed
@@ -30,20 +31,16 @@ struct HomeView: View {
                     )
                 }
             }
-            .navigationDestination(for: Route.self) { route in
-                switch route {
-                case .userList:
-                    UserListView(path: $path)
-                case .chat(let chatId, let username):
-                    ChatView(path: $path, chatId: chatId, recipientUsername: username)
-                }
+            .navigationDestination(isPresented: $showUserList) {
+                UserListView()
             }
         }
+
         .onAppear {
             postService.fetchPosts()
         }
     }
-
+    
     private var header: some View {
         HStack {
             Text("Sologram")
@@ -54,7 +51,7 @@ struct HomeView: View {
                 Image(systemName: "magnifyingglass")
             }
             Button {
-                path.append(Route.userList)
+                showUserList = true
             } label: {
                 Image(systemName: "paperplane")
             }
@@ -63,7 +60,7 @@ struct HomeView: View {
         .foregroundStyle(.white)
         .background(.black)
     }
-
+    
     private var postFeed: some View {
         ScrollView {
             LazyVStack {
@@ -73,23 +70,23 @@ struct HomeView: View {
             }
         }
     }
-
+    
     private func postCard(_ post: Post) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(post.author.username)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .padding(.horizontal)
-
+            
             AsyncImage(url: URL(string: post.imageUrl)) { image in
                 image.resizable()
-                     .scaledToFit()
-                     .frame(maxWidth: .infinity, maxHeight: 300)
-                     .background(.gray)
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: 300)
+                    .background(.gray)
             } placeholder: {
                 ProgressView()
             }
-
+            
             HStack(spacing: 16) {
                 Button {
                     postService.toggleLike(post: post)
@@ -101,7 +98,7 @@ struct HomeView: View {
                         Text("\(post.likes)")
                     }
                 }
-
+                
                 Button {
                     selectedPost = post
                     postService.fetchComments(postId: post.id) { comments in
@@ -111,7 +108,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "bubble.left")
                 }
-
+                
                 Spacer()
             }
             .foregroundStyle(.white)
@@ -124,7 +121,6 @@ struct HomeView: View {
         .padding([.horizontal, .top])
     }
 }
-
 
 #Preview {
     @Previewable @State var userImages: [String] = []

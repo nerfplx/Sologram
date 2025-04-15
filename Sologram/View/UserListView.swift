@@ -3,9 +3,11 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct UserListView: View {
-    @Binding var path: NavigationPath
     @State private var users: [UserProfile] = []
     @State private var searchText: String = ""
+    @State private var showChatModal = false
+    @State private var selectedChat: (chatId: String, recipientUsername: String)? = nil
+    @Environment(\.dismiss) var dismiss
     
     private let db = Firestore.firestore()
     
@@ -29,7 +31,9 @@ struct UserListView: View {
                 .offset(y: 40)
             
             List(filteredUsers) { user in
-                Button(action: { startChat(with: user) }) {
+                Button(action: {
+                    startChat(with: user)
+                }) {
                     HStack {
                         profileImage(for: user)
                         Text(user.username)
@@ -42,12 +46,28 @@ struct UserListView: View {
                 .listRowBackground(Color("grayCustom"))
             }
             .onAppear(perform: fetchUsers)
-            
-            .navigationBarItems(leading: backButton)
         }
         .scrollContentBackground(.hidden)
         .navigationBarBackButtonHidden(true)
         .background(.black)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .sheet(isPresented: $showChatModal) {
+            if let chat = selectedChat {
+                ChatModalWrapper(chatId: chat.chatId, recipientUsername: chat.recipientUsername)
+                    .presentationDetents([.fraction(0.75)])
+                    .presentationDragIndicator(.visible)
+                    .background(.clear)
+            }
+        }
     }
     
     private func fetchUsers() {
@@ -56,7 +76,8 @@ struct UserListView: View {
                 guard let documents = snapshot?.documents else { return }
                 self.users = documents.compactMap { doc in
                     let data = doc.data()
-                    guard let uid = data["uid"] as? String, let username = data["username"] as? String else { return nil }
+                    guard let uid = data["uid"] as? String,
+                          let username = data["username"] as? String else { return nil }
                     let profileImageURL = data["profileImageURL"] as? String
                     return UserProfile(uid: uid, email: "", username: username, bio: "", profileImageURL: profileImageURL)
                 }
@@ -73,7 +94,8 @@ struct UserListView: View {
     private func startChat(with user: UserProfile) {
         guard let currentUserId = Auth.auth().currentUser?.uid else { return }
         let chatId = generateChatId(for: currentUserId, and: user.uid)
-        path.append(Route.chat(chatId: chatId, recipientUsername: user.username))
+        selectedChat = (chatId, user.username)
+        showChatModal = true
     }
     
     private func profileImage(for user: UserProfile) -> some View {
@@ -82,11 +104,9 @@ struct UserListView: View {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
-                        ProgressView()
-                            .frame(width: 40, height: 40)
+                        ProgressView().frame(width: 40, height: 40)
                     case .success(let image):
-                        image
-                            .resizable()
+                        image.resizable()
                             .scaledToFill()
                             .frame(width: 40, height: 40)
                             .clipShape(Circle())
@@ -109,17 +129,20 @@ struct UserListView: View {
             }
         }
     }
+}
+
+struct ChatModalWrapper: View {
+    let chatId: String
+    let recipientUsername: String
     
-    private var backButton: some View {
-        Button(action: {
-            if !path.isEmpty {
-                path.removeLast()
-            }
-        }) {
-            HStack {
-                Image(systemName: "chevron.left")
-            }
-            .foregroundColor(.white)
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+            
+            ChatView(chatId: chatId, recipientUsername: recipientUsername)
+                .background(.black)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
 }
