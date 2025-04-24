@@ -19,7 +19,7 @@ struct UserListView: View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("Поиск", text: $searchText)
                 .padding(10)
-                .background(Color("grayCustom"))
+                .background(.gray.opacity(0.1))
                 .foregroundStyle(.white)
                 .cornerRadius(10)
                 .padding(.horizontal, 22)
@@ -43,13 +43,13 @@ struct UserListView: View {
                         Spacer()
                     }
                 }
-                .listRowBackground(Color("grayCustom"))
+                .listRowBackground(Color.gray.opacity(0.1))
             }
             .onAppear(perform: fetchUsers)
         }
         .scrollContentBackground(.hidden)
         .navigationBarBackButtonHidden(true)
-        .background(.black)
+        .background(Color("grayCustom"))
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
@@ -137,12 +137,11 @@ struct ChatModalWrapper: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color.black.opacity(0.25)
+            Color.gray.opacity(0.1)
                 .ignoresSafeArea()
             
             ChatView(chatId: chatId, recipientUsername: recipientUsername)
-                .background(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .background(Color("grayCustom"))
         }
     }
 }

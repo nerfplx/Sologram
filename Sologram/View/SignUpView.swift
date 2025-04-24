@@ -15,6 +15,7 @@ struct SignUpView: View {
         NavigationStack {
             VStack {
                 Text("Sign Up")
+                    .foregroundStyle(.white)
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding()
@@ -38,15 +39,15 @@ struct SignUpView: View {
                     Text("Sign Up")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(.green)
+                        .background(Color.green.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 .padding()
-                
                 Spacer()
             }
             .padding()
+            .background(.black)
             .navigationDestination(isPresented: $navigateToEditProfile) {
                 if let userProfile = userProfile {
                     ProfileView()

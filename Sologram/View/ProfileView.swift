@@ -26,7 +26,7 @@ struct ProfileView: View {
                     ProgressView()
                 }
             }
-            .background(.black)
+            .background(Color("grayCustom"))
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 loadUserProfile()
@@ -44,7 +44,6 @@ extension ProfileView {
             Text(user.email.split(separator: "@")[0])
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(.black)
                 .foregroundColor(.white)
                 .font(.title)
                 .bold()
@@ -73,6 +72,7 @@ extension ProfileView {
             .font(.title2)
             .padding()
         }
+        .background(.gray.opacity(0.1))
     }
     
     private var imagesGrid: some View {

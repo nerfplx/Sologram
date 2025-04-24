@@ -19,7 +19,7 @@ struct HomeView: View {
                 postFeed
                 NavigationBarView(userImages: $userImages)
             }
-            .background(.black)
+            .background(Color("grayCustom"))
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showCommentsModal) {
                 if let post = selectedPost {
@@ -58,7 +58,7 @@ struct HomeView: View {
         }
         .padding()
         .foregroundStyle(.white)
-        .background(.black)
+        .background(.gray.opacity(0.1))
     }
     
     private var postFeed: some View {
@@ -115,10 +115,7 @@ struct HomeView: View {
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
-        .background(.black)
-        .cornerRadius(10)
-        .shadow(radius: 5)
-        .padding([.horizontal, .top])
+        .background(.clear)
     }
 }
 

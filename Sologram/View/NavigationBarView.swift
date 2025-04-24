@@ -27,7 +27,7 @@ struct NavigationBarView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(.black)
+        .background(.gray.opacity(0.1))
         .foregroundColor(.white)
         .font(.title)
         .ignoresSafeArea(edges: .bottom)
